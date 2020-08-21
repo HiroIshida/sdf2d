@@ -60,6 +60,7 @@ ContourData load_testdata(string filename="../test.json")
 void construct_check_inside_map(
     const vector<array<double, 2>>& V,
     const vector<array<uint, 2>>& E,
+    const array<double, 2>& w_grid,
     vector<vector<bool>>& check_inside_map)
 {
   for(auto& e : E)
@@ -74,13 +75,18 @@ void construct_check_inside_map(
     }
 
     array2d diff = subt(q, p);
-    double inc = diff[1]/diff[0];
+    double eps = 1e-3;
+    bool isEqualVertex = (abs(diff[0]) < w_grid[0] * eps || abs(diff[1]) < w_grid[1] * eps);
+    if(!isEqualVertex){
+      double inc = diff[1]/diff[0];
+      std::cout << inc << std::endl; 
 
-    auto xint_min = uint(std::ceil(p[0]));
-    auto xint_max = uint(std::floor(q[0]));
-    for(int xint=xint_min; xint <= xint_max; xint++){
-      int y_intersect = std::ceil(inc*(xint - p[0]) + p[1]);
-      check_inside_map[xint][y_intersect] = true;
+      auto xint_min = uint(std::ceil(p[0]));
+      auto xint_max = uint(std::floor(q[0]));
+      for(int xint=xint_min; xint <= xint_max; xint++){
+        int y_intersect = std::ceil(inc*(xint - p[0]) + p[1]);
+        check_inside_map[xint][y_intersect] = true;
+      }
     }
   }
   for(auto& yline : check_inside_map){
@@ -145,7 +151,7 @@ int main(){
   auto& V = cdata.V; 
 
   // scaling from original coordinate to interger-based coordinates starting from (0, 0)
-  array2d w_grid = {(b_max[0] - b_min[0])/((double)N[0]), (b_max[1] - b_min[1])/((double)N[1])};
+  array2d w_grid = {(b_max[0] - b_min[0])/(N[0] - 1.0), (b_max[1] - b_min[1])/(N[1] - 1.0)};
   auto V_scaled = V; 
   for(auto& v : V_scaled){
     for(int i=0; i<2; i++){v[i] = (v[i] - b_min[i]) / w_grid[i];}
@@ -153,7 +159,7 @@ int main(){
 
   // TODO for a large data, hashtable like data structure would be prefarable
   vector<vector<bool>> isInside(N[0], vector<bool>(N[1], false));
-  construct_check_inside_map(V_scaled, E, isInside);
+  construct_check_inside_map(V_scaled, E, w_grid, isInside);
 
   vector<array<uint, 2>> V2E(V.size());
   vector<unsigned int> counters(V.size());
@@ -180,11 +186,9 @@ int main(){
   outputfile << j.dump();
   outputfile.close();
 
-  /*
-  for(auto& yline : sdf){
+  for(auto& yline : isInside){
     string hoge;
     for(auto y : yline){ cout << y;}
     cout << endl;
   }
-  */
 }
