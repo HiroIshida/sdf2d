@@ -144,41 +144,41 @@ int main(){
   array2d w = {double(N[0])/(b_max[0] - b_min[0]), double(N[1])/(b_max[1] - b_min[1])};
 
 
-  clock_t start = clock();
+  auto& E = cdata.E;
+  auto V = cdata.V; 
+  for(auto& v : V){
+    for(int i=0; i<2; i++){v[i] = (v[i] - b_min[i]) * w[i];}
+  }
 
-  for(int ii=0; ii<1000; ii++){
-
-    auto& E = cdata.E;
-    auto V = cdata.V; 
-    for(auto& v : V){
-      for(int i=0; i<2; i++){v[i] = (v[i] - b_min[i]) * w[i];}
-    }
-
-    vector<array<uint, 2>> V2E(V.size());
-    vector<unsigned int> counters(V.size());
-    for(int i=0; i<E.size(); i++){
-      for(int j=0; j<2; j++){
-        auto idx_v = E[i][j];
-        V2E[idx_v][counters[idx_v]] = i;
-        counters[idx_v] += 1;
-      }
-    }
-
-    // TODO for a large data, hashtable like data structure would be prefarable
-    vector<vector<bool>> isInside(N[0], vector<bool>(N[1], false));
-    construct_check_inside_map(V, E, isInside);
-
-    vector<vector<double>> sdf(N[0], vector<double>(N[1]));
-
-    for(int i=0; i<N[0]; i++){
-      for(int j=0; j<N[1]; j++){
-        double dist = compute_unsigned_distance(i, j, V, E, V2E);
-        sdf[i][j] = (isInside[i][j] ? -dist : dist);
-      }
+  vector<array<uint, 2>> V2E(V.size());
+  vector<unsigned int> counters(V.size());
+  for(int i=0; i<E.size(); i++){
+    for(int j=0; j<2; j++){
+      auto idx_v = E[i][j];
+      V2E[idx_v][counters[idx_v]] = i;
+      counters[idx_v] += 1;
     }
   }
 
-  std::cout << "naive: " << clock() - start << std::endl;
+  // TODO for a large data, hashtable like data structure would be prefarable
+  vector<vector<bool>> isInside(N[0], vector<bool>(N[1], false));
+  construct_check_inside_map(V, E, isInside);
+
+  vector<vector<double>> sdf(N[0], vector<double>(N[1]));
+
+  for(int i=0; i<N[0]; i++){
+    for(int j=0; j<N[1]; j++){
+      double dist = compute_unsigned_distance(i, j, V, E, V2E);
+      sdf[i][j] = (isInside[i][j] ? -dist : dist);
+    }
+  }
+
+  nlohmann::json j;
+  j["data"] = sdf;
+
+  ofstream outputfile("../data.json");
+  outputfile << j.dump();
+  outputfile.close();
 
   /*
   for(auto& yline : sdf){
