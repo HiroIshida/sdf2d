@@ -141,14 +141,20 @@ int main(){
   auto& b_max = cdata.b_max;
   auto& N = cdata.N;
 
-  array2d w = {double(N[0])/(b_max[0] - b_min[0]), double(N[1])/(b_max[1] - b_min[1])};
-
-
   auto& E = cdata.E;
-  auto V = cdata.V; 
-  for(auto& v : V){
-    for(int i=0; i<2; i++){v[i] = (v[i] - b_min[i]) * w[i];}
+  auto& V = cdata.V; 
+
+  // scaling from original coordinate to interger-based coordinates starting from (0, 0)
+  array2d scale = {double(N[0])/(b_max[0] - b_min[0]), double(N[1])/(b_max[1] - b_min[1])};
+  auto V_scaled = V; 
+  for(auto& v : V_scaled){
+    for(int i=0; i<2; i++){v[i] = (v[i] - b_min[i]) * scale[i];}
   }
+
+
+  // TODO for a large data, hashtable like data structure would be prefarable
+  vector<vector<bool>> isInside(N[0], vector<bool>(N[1], false));
+  construct_check_inside_map(V_scaled, E, isInside);
 
   vector<array<uint, 2>> V2E(V.size());
   vector<unsigned int> counters(V.size());
@@ -160,15 +166,10 @@ int main(){
     }
   }
 
-  // TODO for a large data, hashtable like data structure would be prefarable
-  vector<vector<bool>> isInside(N[0], vector<bool>(N[1], false));
-  construct_check_inside_map(V, E, isInside);
-
   vector<vector<double>> sdf(N[0], vector<double>(N[1]));
-
   for(int i=0; i<N[0]; i++){
     for(int j=0; j<N[1]; j++){
-      double dist = compute_unsigned_distance(i, j, V, E, V2E);
+      double dist = compute_unsigned_distance(i, j, V_scaled, E, V2E);
       sdf[i][j] = (isInside[i][j] ? -dist : dist);
     }
   }
