@@ -3,17 +3,36 @@
 #include <iostream>
 #include <fstream>
 #include <nlohmann/json.hpp>
-
+#include <math.h>
 #include <time.h>
 
 using namespace std;
 using uint = unsigned int;
 using array2d = std::array<double, 2>;
 
+array2d add(const array2d& x, const array2d& y){
+  array2d out = {x[0] + y[0], x[1] + y[1]};
+  return out;
+}
+
 array2d subt(const array2d& x, const array2d& y){
   array2d out = {x[0] - y[0], x[1] - y[1]};
   return out;
 }
+
+array2d mult(double x, const array2d& y){
+  array2d out = {x*y[0], x*y[1]};
+  return out;
+}
+
+double dot(const array2d& x, const array2d& y){
+  return x[0]*y[0] + x[1]*y[1];
+}
+
+double sqnorm(const array2d& x){
+  return dot(x, x);
+}
+
 
 struct ContourData
 {
@@ -76,6 +95,7 @@ double compute_unsigned_distance(unsigned int xint, unsigned int yint,
     const vector<array<uint, 2>>& E, 
     const vector<array<uint, 2>>& V2E)
 {
+
   double sqdist_min = 9999999.0 ; // some random value
   unsigned int vert_idx_closest;
   for(int i=0; i<V.size(); i++){
@@ -86,7 +106,32 @@ double compute_unsigned_distance(unsigned int xint, unsigned int yint,
       vert_idx_closest = i;
     }
   }
-  return sqdist_min;
+
+  array2d p = {xint, yint};
+  auto& adj_edge_idxes = V2E[vert_idx_closest];
+
+
+  double sqdist_to_edge_min = 999999.0;
+  for(auto edge_idx : adj_edge_idxes){
+    auto& e = E[edge_idx];
+    auto& v0 = V[e[0]];
+    auto& v1 = V[e[1]];
+    auto d = subt(v1, v0);
+    double s = dot(subt(p, v0), d)/sqnorm(d); // like highschool math
+
+    double sqdist;
+    if(s < 0.0){
+      sqdist = sqnorm(subt(v0, p));
+    }else if(s > 1.0){
+      sqdist = sqnorm(subt(v1, p));
+    }else{
+      sqdist = sqnorm(subt(p, add(v0, mult(s, d)))); // lisp??
+    }
+    if(sqdist < sqdist_to_edge_min){
+      sqdist_to_edge_min = sqdist;
+    }
+  }
+  return sqrt(sqdist_to_edge_min);
 }
 
 int main(){
@@ -98,34 +143,42 @@ int main(){
 
   array2d w = {double(N[0])/(b_max[0] - b_min[0]), double(N[1])/(b_max[1] - b_min[1])};
 
-  auto& E = cdata.E;
-  auto V = cdata.V; 
-  for(auto& v : V){
-    for(int i=0; i<2; i++){v[i] = (v[i] - b_min[i]) * w[i];}
-  }
 
-  vector<array<uint, 2>> V2E(V.size());
-  vector<unsigned int> counters(V.size());
-  for(int i=0; i<E.size(); i++){
-    for(int j=0; j<2; j++){
-      auto idx_v = E[i][j];
-      V2E[idx_v][counters[idx_v]] = i;
-      counters[idx_v] += 1;
+  clock_t start = clock();
+
+  for(int ii=0; ii<1000; ii++){
+
+    auto& E = cdata.E;
+    auto V = cdata.V; 
+    for(auto& v : V){
+      for(int i=0; i<2; i++){v[i] = (v[i] - b_min[i]) * w[i];}
+    }
+
+    vector<array<uint, 2>> V2E(V.size());
+    vector<unsigned int> counters(V.size());
+    for(int i=0; i<E.size(); i++){
+      for(int j=0; j<2; j++){
+        auto idx_v = E[i][j];
+        V2E[idx_v][counters[idx_v]] = i;
+        counters[idx_v] += 1;
+      }
+    }
+
+    // TODO for a large data, hashtable like data structure would be prefarable
+    vector<vector<bool>> isInside(N[0], vector<bool>(N[1], false));
+    construct_check_inside_map(V, E, isInside);
+
+    vector<vector<double>> sdf(N[0], vector<double>(N[1]));
+
+    for(int i=0; i<N[0]; i++){
+      for(int j=0; j<N[1]; j++){
+        double dist = compute_unsigned_distance(i, j, V, E, V2E);
+        sdf[i][j] = (isInside[i][j] ? -dist : dist);
+      }
     }
   }
 
-  // TODO for a large data, hashtable like data structure would be prefarable
-  vector<vector<bool>> isInside(N[0], vector<bool>(N[1], false));
-  construct_check_inside_map(V, E, isInside);
-
-  vector<vector<double>> sdf(N[0], vector<double>(N[1]));
-
-  for(int i=0; i<N[0]; i++){
-    for(int j=0; j<N[1]; j++){
-      double dist = compute_unsigned_distance(i, j, V, E, V2E);
-      sdf[i][j] = (isInside[i][j] ? -dist : dist);
-    }
-  }
+  std::cout << "naive: " << clock() - start << std::endl;
 
   /*
   for(auto& yline : sdf){
