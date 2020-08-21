@@ -24,7 +24,6 @@ struct ContourData
   vector<array<double, 2>> V;
 };
 
-#include "unistd.h"
 ContourData load_testdata(string filename="../test.json")
 {
   ifstream my_file(filename);
@@ -72,6 +71,24 @@ void construct_check_inside_map(
   }
 }
 
+double compute_unsigned_distance(unsigned int xint, unsigned int yint,
+    const vector<array<double, 2>>& V,
+    const vector<array<uint, 2>>& E, 
+    const vector<array<uint, 2>>& V2E)
+{
+  double sqdist_min = 9999999.0 ; // some random value
+  unsigned int vert_idx_closest;
+  for(int i=0; i<V.size(); i++){
+    auto& vert = V[i];
+    double sqdist = pow(vert[0] - (double)xint, 2) + pow(vert[1] - (double)yint, 2);
+    if(sqdist < sqdist_min){
+      sqdist_min = sqdist;
+      vert_idx_closest = i;
+    }
+  }
+  return sqdist_min;
+}
+
 int main(){
 
   auto cdata = load_testdata();
@@ -87,12 +104,34 @@ int main(){
     for(int i=0; i<2; i++){v[i] = (v[i] - b_min[i]) * w[i];}
   }
 
+  vector<array<uint, 2>> V2E(V.size());
+  vector<unsigned int> counters(V.size());
+  for(int i=0; i<E.size(); i++){
+    for(int j=0; j<2; j++){
+      auto idx_v = E[i][j];
+      V2E[idx_v][counters[idx_v]] = i;
+      counters[idx_v] += 1;
+    }
+  }
+
   // TODO for a large data, hashtable like data structure would be prefarable
-  vector<vector<bool>> incrementer_map(N[0], vector<bool>(N[1], false));
-  construct_check_inside_map(V, E, incrementer_map);
-  for(auto& yline : incrementer_map ){
+  vector<vector<bool>> isInside(N[0], vector<bool>(N[1], false));
+  construct_check_inside_map(V, E, isInside);
+
+  vector<vector<double>> sdf(N[0], vector<double>(N[1]));
+
+  for(int i=0; i<N[0]; i++){
+    for(int j=0; j<N[1]; j++){
+      double dist = compute_unsigned_distance(i, j, V, E, V2E);
+      sdf[i][j] = (isInside[i][j] ? -dist : dist);
+    }
+  }
+
+  /*
+  for(auto& yline : sdf){
     string hoge;
     for(auto y : yline){ cout << y;}
     cout << endl;
   }
+  */
 }
