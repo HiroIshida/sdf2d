@@ -39,24 +39,11 @@ ContourData load_testdata(string filename="../test.json")
   return cdata;
 }
 
-int main(){
-
-  auto cdata = load_testdata();
-  auto& b_min = cdata.b_min;
-  auto& b_max = cdata.b_max;
-  auto& N = cdata.N;
-
-  array2d w = {double(N[0])/(b_max[0] - b_min[0]), double(N[1])/(b_max[1] - b_min[1])};
-
-  auto& E = cdata.E;
-  auto V = cdata.V; 
-  for(auto& v : V){
-    for(int i=0; i<2; i++){v[i] = (v[i] - b_min[i]) * w[i];}
-  }
-
-  // TODO for a large data, hashtable like data structure would be prefarable
-  vector<vector<bool>> incrementer_map(N[0], vector<bool>(N[1], false));
-  
+void construct_check_inside_map(
+    const vector<array<double, 2>>& V,
+    const vector<array<uint, 2>>& E,
+    vector<vector<bool>>& check_inside_map)
+{
   for(auto& e : E)
   {
     auto& v0 = V[e[0]];
@@ -75,16 +62,34 @@ int main(){
     auto xint_max = uint(std::floor(q[0]));
     for(int xint=xint_min; xint <= xint_max; xint++){
       int y_intersect = std::ceil(inc*(xint - p[0]) + p[1]);
-      incrementer_map[xint][y_intersect] = true;
+      check_inside_map[xint][y_intersect] = true;
     }
   }
-
-  for(auto& yline : incrementer_map){
+  for(auto& yline : check_inside_map){
     for(int i=1; i<yline.size(); i++){
       yline[i] = (yline[i] != yline[i-1]);
     }
   }
+}
 
+int main(){
+
+  auto cdata = load_testdata();
+  auto& b_min = cdata.b_min;
+  auto& b_max = cdata.b_max;
+  auto& N = cdata.N;
+
+  array2d w = {double(N[0])/(b_max[0] - b_min[0]), double(N[1])/(b_max[1] - b_min[1])};
+
+  auto& E = cdata.E;
+  auto V = cdata.V; 
+  for(auto& v : V){
+    for(int i=0; i<2; i++){v[i] = (v[i] - b_min[i]) * w[i];}
+  }
+
+  // TODO for a large data, hashtable like data structure would be prefarable
+  vector<vector<bool>> incrementer_map(N[0], vector<bool>(N[1], false));
+  construct_check_inside_map(V, E, incrementer_map);
   for(auto& yline : incrementer_map ){
     string hoge;
     for(auto y : yline){ cout << y;}
