@@ -145,12 +145,11 @@ int main(){
   auto& V = cdata.V; 
 
   // scaling from original coordinate to interger-based coordinates starting from (0, 0)
-  array2d scale = {double(N[0])/(b_max[0] - b_min[0]), double(N[1])/(b_max[1] - b_min[1])};
+  array2d w_grid = {(b_max[0] - b_min[0])/((double)N[0]), (b_max[1] - b_min[1])/((double)N[1])};
   auto V_scaled = V; 
   for(auto& v : V_scaled){
-    for(int i=0; i<2; i++){v[i] = (v[i] - b_min[i]) * scale[i];}
+    for(int i=0; i<2; i++){v[i] = (v[i] - b_min[i]) / w_grid[i];}
   }
-
 
   // TODO for a large data, hashtable like data structure would be prefarable
   vector<vector<bool>> isInside(N[0], vector<bool>(N[1], false));
