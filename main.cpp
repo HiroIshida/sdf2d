@@ -79,7 +79,6 @@ void construct_check_inside_map(
     bool isEqualVertex = (abs(diff[0]) < w_grid[0] * eps || abs(diff[1]) < w_grid[1] * eps);
     if(!isEqualVertex){
       double inc = diff[1]/diff[0];
-      std::cout << inc << std::endl; 
 
       auto xint_min = uint(std::ceil(p[0]));
       auto xint_max = uint(std::floor(q[0]));
@@ -89,6 +88,7 @@ void construct_check_inside_map(
       }
     }
   }
+
   for(auto& yline : check_inside_map){
     for(int i=1; i<yline.size(); i++){
       yline[i] = (yline[i] != yline[i-1]);
@@ -150,16 +150,21 @@ int main(){
   auto& E = cdata.E;
   auto& V = cdata.V; 
 
+
   // scaling from original coordinate to interger-based coordinates starting from (0, 0)
   array2d w_grid = {(b_max[0] - b_min[0])/(N[0] - 1.0), (b_max[1] - b_min[1])/(N[1] - 1.0)};
   auto V_scaled = V; 
+  double eps_adhoc = 1e-5; // to avoid a vertex is exactly on the interger grid
   for(auto& v : V_scaled){
-    for(int i=0; i<2; i++){v[i] = (v[i] - b_min[i]) / w_grid[i];}
+    for(int i=0; i<2; i++){v[i] = ((v[i] - b_min[i]) / w_grid[i]) - eps_adhoc;}
   }
 
   // TODO for a large data, hashtable like data structure would be prefarable
+
   vector<vector<bool>> isInside(N[0], vector<bool>(N[1], false));
+  clock_t start = clock();
   construct_check_inside_map(V_scaled, E, w_grid, isInside);
+  cout << "better: " << clock() - start << endl;
 
   vector<array<uint, 2>> V2E(V.size());
   vector<unsigned int> counters(V.size());
