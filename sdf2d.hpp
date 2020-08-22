@@ -50,7 +50,7 @@ void construct_check_inside_map(
 
     array2d diff = subt(q, p);
     double eps = 1e-3;
-    bool isEqualVertex = (abs(diff[0]) < w_grid[0] * eps || abs(diff[1]) < w_grid[1] * eps);
+    bool isEqualVertex = (abs(diff[0]) < w_grid[0] * eps && abs(diff[1]) < w_grid[1] * eps);
     if(!isEqualVertex){
       double inc = diff[1]/diff[0];
 
@@ -58,7 +58,9 @@ void construct_check_inside_map(
       auto xint_max = uint(std::floor(q[0]));
       for(int xint=xint_min; xint <= xint_max; xint++){
         int y_intersect = std::ceil(inc*(xint - p[0]) + p[1]);
-        check_inside_map[xint][y_intersect] = true;
+        // tempting to set just "true". but we must handle the case when even number intersections exist at the grid point.
+        // Thus, if already check_inside_map must be reversed like below. (true->false, false->true)
+        check_inside_map[xint][y_intersect] = (check_inside_map[xint][y_intersect] == false); 
       }
     }
   }
