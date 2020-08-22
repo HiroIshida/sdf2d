@@ -50,7 +50,7 @@ void construct_check_inside_map(
 
     array2d diff = subt(q, p);
     double eps = 1e-3;
-    bool isEqualVertex = (abs(diff[0]) < w_grid[0] * eps || abs(diff[1]) < w_grid[1] * eps);
+    bool isEqualVertex = (abs(diff[0]) < w_grid[0] * eps && abs(diff[1]) < w_grid[1] * eps);
     if(!isEqualVertex){
       double inc = diff[1]/diff[0];
 
