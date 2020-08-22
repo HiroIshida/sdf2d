@@ -9,6 +9,7 @@ cd build
 
 /opt/cmake-3.18.1-Linux-x86_64//bin/cmake -DPYTHON_EXECUTABLE=/usr/bin/python2.7 .. -DBUILD_PYTHON_INTERFACE=ON
 make -j4
+cp sdf2d.so $HOME/.local/lib/python2.7/site-packages/
 
 if [ "$FLG_DEBUG" = "TRUE" ]; then
     gdb out -command ../debug.gdb
