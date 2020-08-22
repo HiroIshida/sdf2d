@@ -6,7 +6,8 @@ do
 done
 
 cd build
-cmake ..
+
+/opt/cmake-3.18.1-Linux-x86_64//bin/cmake -DPYTHON_EXECUTABLE=/usr/bin/python2.7 .. -DBUILD_PYTHON_INTERFACE=ON
 make -j4
 
 if [ "$FLG_DEBUG" = "TRUE" ]; then
