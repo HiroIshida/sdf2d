@@ -96,7 +96,7 @@ void construct_check_inside_map(
   }
 }
 
-double compute_unsigned_distance(unsigned int xint, unsigned int yint,
+double compute_unsigned_distance(double x, double y,
     const vector<array<double, 2>>& V,
     const vector<array<uint, 2>>& E, 
     const vector<array<uint, 2>>& V2E)
@@ -106,14 +106,14 @@ double compute_unsigned_distance(unsigned int xint, unsigned int yint,
   unsigned int vert_idx_closest;
   for(int i=0; i<V.size(); i++){
     auto& vert = V[i];
-    double sqdist = pow(vert[0] - (double)xint, 2) + pow(vert[1] - (double)yint, 2);
+    double sqdist = pow(vert[0] - x, 2) + pow(vert[1] - y, 2);
     if(sqdist < sqdist_min){
       sqdist_min = sqdist;
       vert_idx_closest = i;
     }
   }
 
-  array2d p = {xint, yint};
+  array2d p = {x, y};
   auto& adj_edge_idxes = V2E[vert_idx_closest];
 
 
@@ -178,8 +178,10 @@ int main(){
 
   vector<vector<double>> sdf(N[0], vector<double>(N[1]));
   for(int i=0; i<N[0]; i++){
+    double x = b_min[0] + i * w_grid[0];
     for(int j=0; j<N[1]; j++){
-      double dist = compute_unsigned_distance(i, j, V_scaled, E, V2E);
+      double y = b_min[1] + j * w_grid[1];
+      double dist = compute_unsigned_distance(x, y, V, E, V2E);
       sdf[i][j] = (isInside[i][j] ? -dist : dist);
     }
   }
