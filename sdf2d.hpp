@@ -58,7 +58,9 @@ void construct_check_inside_map(
       auto xint_max = uint(std::floor(q[0]));
       for(int xint=xint_min; xint <= xint_max; xint++){
         int y_intersect = std::ceil(inc*(xint - p[0]) + p[1]);
-        check_inside_map[xint][y_intersect] = (check_inside_map[xint][y_intersect] == false);
+        // tempting to set just "true". but we must handle the case when even number intersections exist at the grid point.
+        // Thus, if already check_inside_map must be reversed like below. (true->false, false->true)
+        check_inside_map[xint][y_intersect] = (check_inside_map[xint][y_intersect] == false); 
       }
     }
   }
