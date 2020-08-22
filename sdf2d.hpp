@@ -58,7 +58,7 @@ void construct_check_inside_map(
       auto xint_max = uint(std::floor(q[0]));
       for(int xint=xint_min; xint <= xint_max; xint++){
         int y_intersect = std::ceil(inc*(xint - p[0]) + p[1]);
-        check_inside_map[xint][y_intersect] = true;
+        check_inside_map[xint][y_intersect] = (check_inside_map[xint][y_intersect] == false);
       }
     }
   }
